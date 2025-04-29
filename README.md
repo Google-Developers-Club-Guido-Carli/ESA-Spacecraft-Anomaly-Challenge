@@ -25,6 +25,38 @@ The metric does NOT care about:
 the level of overlap between correct detections and anomalous segments
 detection timing
 
+**Dataset Description**
+
+**TLDR**
+
+The dataset represents several years of real sensor measurements collected from a large spacecraft operated by the European Space Agency. It is a single long continuous multivariate time series data of 87 mission-critical parameters. The dataset was carefully annotated for anomalies and rare events based on the original flight control reports and several iterations of manual and algorithm-driven refinement of labels [1].
+
+Your task is to find all anomalous time points in the test set (binary decision, 0 - normal point, 1 - anomalous point, see the sample_submission.parquet file) while minimizing the number of false alarms.
+
+**List of files**
+
+train.parquet - the training set; 14 years of ESA-Mission1 data from the ESA-AD dataset with annotated anomalous time points (is_anomaly column)
+test.parquet - the test set; a never before published 6-months long fragment of ESA-Mission1 data
+target_channels.csv - a list of names of 58 channels monitored for anomalies (other 29 channels are just external auxiliary variables)
+sample_submission.parquet - a sample submission file in the correct format
+
+**Preprocessing**
+
+The dataset is a simplified and preprocessed version of the raw ESA-Mission1 data from the ESA-AD dataset publicly available on Zenodo. The preprocessing is described together with all other dataset details in the ESA-ADB paper [2] and the preprocessing script is available on the official ESA-ADB GitHub repository here. For simplicity, timestamps have been replaced with integer index and annotations have been aggregated across all channels into the single is_anomaly column, such that 1 is marked for a time point if at least one channel is affected by an anomaly or a rare event. Participants are welcome to propose their own preprocessing and annotations aggregation methods, however, the test set is already preprocessed and aggregated using our described methods.
+
+**Channels**
+
+The dataset contains 87 channels, among which 58 are target channels (monitored for anomalies) listed in the target_channels.csv file, 18 channels are auxiliary environmental variables (not monitored for anomalies), and 11 are telecommands (binary control commands sent by operators; marked with the telecommand_ prefix). The subset of 6 channels 41-46 is recommended as a good starting point for developing and testing algorithms before applying them to the full set.
+
+These 87 channels are just a small subset of real spacecraft telemetry with thousands of channels. However, this subset was designed by spacecraft operators to be a self-contained representation of the most important mission-critical and auxiliary variables necessary to identify anomalies.
+
+**Events to detect**
+
+ESA-ADB dataset contains three categories of events: anomalies, nominal rare events, and communication gaps. The test set does not contain communication gaps. Your task is to detect both anomalies and rare nominal events.
+
+**References**
+[1] K. Kotowski, C. Haskamp, B. Ruszczak, J. Andrzejewski, and J. Nalepa, “Annotating Large Satellite Telemetry Dataset For ESA International AI Anomaly Detection Benchmark,” in Proceedings of the 2023 conference on Big Data from Space, Vienna: Publications Office of the European Union, Nov. 2023, pp. 341–344. link: https://op.europa.eu/en/publication-detail/-/publication/10ba86b1-7c63-11ee-99ba-01aa75ed71a1/language-en.
+
 **References 📖**
 
 [1] K. Kotowski K, C. Haskamp, J. Andrzejewski, B. Ruszczak, J. Nalepa, D. Lakey, P. Collins, A. Kolmas, M. Bartesaghi, J. Martinez-Heras, G. De Canio, “European Space Agency Benchmark for Anomaly Detection in Satellite Telemetry,” 2024, link: https://arxiv.org/abs/2406.17826.
