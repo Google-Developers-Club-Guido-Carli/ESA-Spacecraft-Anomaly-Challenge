@@ -1,3 +1,5 @@
+**ESA Spacecraft Anomaly Detection Challenge**
+
 Your objective is to design an algorithm to detect anomalies in a multivariate time series setting. The data used in the Challenge is real spacecraft data coming from one of the European Space Agency's missions (https://www.esa.int/).
 
 You have access to a large set of historical data, baseline algorithms, and detailed descriptions.
