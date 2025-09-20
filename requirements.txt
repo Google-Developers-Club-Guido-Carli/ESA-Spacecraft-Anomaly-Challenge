@@ -33,6 +33,7 @@ pure_eval==0.2.3
 pyarrow==21.0.0
 Pygments==2.19.2
 pyparsing==3.2.3
+pyod==1.1.2
 python-dateutil==2.9.0.post0
 pytz==2025.2
 pywin32==311
@@ -47,3 +48,4 @@ tornado==6.5.2
 traitlets==5.14.3
 tzdata==2025.2
 wcwidth==0.2.13
+
