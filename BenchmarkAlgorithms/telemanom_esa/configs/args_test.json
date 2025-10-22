@@ -1,0 +1,15 @@
+{
+  "executionType": "execute",
+  "dataInput": "/content/telemanom_esa/data/test_te.csv",
+  "dataOutput": "/content/drive/MyDrive/telemanom_esa/runs/errors.csv",
+  "modelInput": "/content/drive/MyDrive/telemanom_esa/runs/model.keras",
+  "modelOutput": "/content/drive/MyDrive/telemanom_esa/runs/model.keras",
+  "customParameters": {
+    "input_channels": ["channel_41","channel_42","channel_43","channel_44","channel_45","channel_46"],
+    "target_channels": ["channel_41","channel_42","channel_43","channel_44","channel_45","channel_46"],
+    "threshold_scores": true,
+    "error_buffer": 100,
+    "min_error_value": 0.001,       
+    "p": 0.13                        
+  }
+}

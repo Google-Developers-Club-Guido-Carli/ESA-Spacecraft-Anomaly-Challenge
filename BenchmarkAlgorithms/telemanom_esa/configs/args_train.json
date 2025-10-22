@@ -1,0 +1,13 @@
+
+{
+  "executionType": "train",
+  "dataInput": "/content/telemanom_esa/data/train_te.csv",
+  "modelOutput": "/content/drive/MyDrive/telemanom_esa/runs/model.keras",
+  "dataOutput": "/content/drive/MyDrive/telemanom_esa/runs/train_placeholder.csv",
+  "customParameters": {
+    "lstm_batch_size": 512,
+    "input_channels": ["channel_41","channel_42","channel_43","channel_44","channel_45","channel_46"],
+    "target_channels": ["channel_41","channel_42","channel_43","channel_44","channel_45","channel_46"]
+  }
+}
+
