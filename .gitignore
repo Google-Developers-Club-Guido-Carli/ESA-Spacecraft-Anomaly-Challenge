@@ -33,3 +33,20 @@ runs/
 # OS
 .DS_Store
 Thumbs.db
+
+# ---- Telemanom additions ----
+# data & large artifacts
+data/
+*.csv
+*.parquet
+*.h5
+*.npy
+*.npz
+*.pkl
+*.joblib
+
+# model/outputs
+runs/
+outputs/
+*.log
+
