@@ -36,7 +36,7 @@ pyparsing==3.2.3
 pyod==1.1.2
 python-dateutil==2.9.0.post0
 pytz==2025.2
-pywin32==311
+pywin32==311; sys_platform == "win32"
 pyzmq==27.0.1
 scikit-learn==1.7.1
 scipy==1.16.1
