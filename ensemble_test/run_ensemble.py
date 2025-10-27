@@ -17,6 +17,7 @@ from ensemble_utils import (
     pointwise_metrics,
     extract_events
 )
+from ensemble_plots import plot_comprehensive_report
 
 
 def load_data(data_dir: str = None):
@@ -114,17 +115,13 @@ def main():
         contamination = 0.01
         print(f"No labels found, using default contamination={contamination}")
     
-    # Initialize ensemble
+    # Initialize ensemble (removed explicit weights to use new defaults)
     print("\n" + "="*60)
     print("Initializing Ensemble Detector")
     print("="*60)
     
     ensemble = EnsembleDetector(
-        channel_names=channel_names,
-        weights={'global': 0.35, 'local': 0.35, 'iforest': 0.30},
-        L_min=3,
-        gap_merge=2,
-        window_size=51
+        channel_names=channel_names
     )
     
     # Fit on training data
@@ -155,6 +152,13 @@ def main():
         scores_val = ensemble.score(val_subset)
         predictions_val = ensemble.predict(val_subset, threshold=best_threshold)
         
+        # Show detector score statistics
+        print(f"\nDetector Score Statistics:")
+        print(f"  Global STD - Mean: {scores_val['s_global'].mean():.4f}, Max: {scores_val['s_global'].max():.4f}, >0.5: {(scores_val['s_global'] > 0.5).sum()}")
+        print(f"  Local STD  - Mean: {scores_val['s_local'].mean():.4f}, Max: {scores_val['s_local'].max():.4f}, >0.5: {(scores_val['s_local'] > 0.5).sum()}")
+        print(f"  IForest    - Mean: {scores_val['s_iforest'].mean():.4f}, Max: {scores_val['s_iforest'].max():.4f}, >0.5: {(scores_val['s_iforest'] > 0.5).sum()}")
+        print(f"  Ensemble   - Mean: {scores_val['score'].mean():.4f}, Max: {scores_val['score'].max():.4f}, >{best_threshold:.2f}: {(scores_val['score'] > best_threshold).sum()}")
+        
         # Event-wise metrics
         precision_ew, recall_ew, f05_ew = eventwise_precision_recall_f05(y_val, predictions_val)
         print(f"Event-wise Precision: {precision_ew:.4f}")
@@ -174,6 +178,33 @@ def main():
         print(f"\nDetected {len(pred_events)} events (ground truth: {len(true_events)})")
         if len(pred_events) > 0:
             print(f"Example events: {pred_events[:5]}")
+        
+        # Generate visualization plots
+        print("\n" + "="*60)
+        print("Generating Visualization Plots")
+        print("="*60)
+        
+        # Choose a sample range with anomalies for detailed view
+        if len(true_events) > 0:
+            # Pick middle event and show context around it
+            mid_event = true_events[len(true_events) // 2]
+            event_start, event_end = mid_event
+            context = 5000  # Show 5000 samples before and after
+            sample_start = max(0, event_start - context)
+            sample_end = min(len(y_val), event_end + context)
+            sample_range = (sample_start, sample_end)
+        else:
+            # Just show first 10000 samples
+            sample_range = (0, min(10000, len(y_val)))
+        
+        plot_comprehensive_report(
+            scores_df=scores_val,
+            predictions=predictions_val,
+            ground_truth=y_val,
+            threshold=best_threshold,
+            sample_range=sample_range,
+            output_dir="outputs/plots"
+        )
     else:
         best_threshold = 0.5
         print(f"\nNo validation labels, using default threshold={best_threshold}")

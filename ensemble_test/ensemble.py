@@ -34,13 +34,13 @@ class EnsembleDetector:
         channel_names: List[str] = None,
         weights: Dict[str, float] = None,
         per_detector_thresholds: Dict[str, float] = None,
-        L_min: int = 3,
-        gap_merge: int = 2,
-        z0_global: float = 3.0,
-        z0_local: float = 3.0,
-        window_size: int = 51,
+        L_min: int = 2,
+        gap_merge: int = 8,
+        z0_global: float = 2.0,
+        z0_local: float = 1.8,
+        window_size: int = 100,
         min_std: float = 1e-6,
-        consensus_bonus: float = 0.05,
+        consensus_bonus: float = 0.15,
         consensus_min_votes: int = 2
     ):
         """
@@ -63,14 +63,14 @@ class EnsembleDetector:
             channel_names = [f'channel_{i}' for i in range(41, 47)]
         self.channel_names = channel_names
         
-        # Default weights
+        # Default weights - favor local and iforest for better sensitivity
         if weights is None:
-            weights = {'global': 0.35, 'local': 0.35, 'iforest': 0.30}
+            weights = {'global': 0.20, 'local': 0.45, 'iforest': 0.35}
         self.weights = self._normalize_weights(weights)
         
-        # Default per-detector vote thresholds
+        # Default per-detector vote thresholds - lower for better recall
         if per_detector_thresholds is None:
-            per_detector_thresholds = {'global': 0.5, 'local': 0.5, 'iforest': 0.5}
+            per_detector_thresholds = {'global': 0.35, 'local': 0.30, 'iforest': 0.40}
         self.per_detector_thresholds = per_detector_thresholds
         
         # Postprocessing params
@@ -142,11 +142,11 @@ class EnsembleDetector:
         # Compute z-scores per channel
         z_scores = np.abs(X - self.global_means_) / self.global_stds_
         
-        # Max z-score across channels
-        z_max = np.max(z_scores, axis=1)
+        # Use 95th percentile of z-scores across channels for better sensitivity
+        z_p95 = np.percentile(z_scores, 95, axis=1)
         
         # Transform to [0,1]
-        scores = z_to_score(z_max, self.z0_global)
+        scores = z_to_score(z_p95, self.z0_global)
         return scores
     
     def _detect_localstd(self, X: pd.DataFrame) -> np.ndarray:
@@ -160,13 +160,13 @@ class EnsembleDetector:
         rolling_mean = X.rolling(
             window=self.window_size,
             center=True,
-            min_periods=1
+            min_periods=max(1, self.window_size // 4)
         ).mean()
         
         rolling_std = X.rolling(
             window=self.window_size,
             center=True,
-            min_periods=1
+            min_periods=max(1, self.window_size // 4)
         ).std()
         
         # Enforce minimum std
@@ -176,11 +176,11 @@ class EnsembleDetector:
         # Compute local z-scores
         z_local = np.abs(X.values - rolling_mean.values) / rolling_std
         
-        # Max z-score across channels
-        z_max = np.max(z_local, axis=1)
+        # Use 90th percentile across channels for better sensitivity
+        z_p90 = np.percentile(z_local, 90, axis=1)
         
         # Transform to [0,1]
-        scores = z_to_score(z_max, self.z0_local)
+        scores = z_to_score(z_p90, self.z0_local)
         return scores
     
     def _detect_iforest(self, X: np.ndarray) -> np.ndarray:
@@ -221,11 +221,17 @@ class EnsembleDetector:
         s_iforest = self._detect_iforest(X_array)
         
         # Weighted aggregation
-        S_raw = (
+        S_weighted = (
             self.weights['global'] * s_global +
             self.weights['local'] * s_local +
             self.weights['iforest'] * s_iforest
         )
+        
+        # Also consider max score for high-confidence anomalies
+        S_max = np.maximum.reduce([s_global, s_local, s_iforest])
+        
+        # Blend weighted average with max (60% weighted, 40% max for more sensitivity)
+        S_raw = 0.6 * S_weighted + 0.4 * S_max
         
         # Consensus bonus: count votes
         votes = (
